@@ -1,0 +1,20 @@
+.analyzer-header {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+.analyzer-input {
+   margin-top: 20px;
+   width: 540px;
+   border-radius: 5px;
+   background-color: rgba(20, 20, 20, .1);
+   vertical-align: middle;
+}
+
+.analyzer-input-label {
+    margin-right: 10px;
+    text-align: center;
+    width: 40px;
+    transform: translate(0, 50%);
+}
