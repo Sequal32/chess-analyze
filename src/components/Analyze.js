@@ -27,11 +27,9 @@ export default class Board extends Component {
     processFEN = (newfen) => {
         this.setState({"startfen": newfen, "editfen": newfen})
         
-        fetch(`${api_url}/getposition?fen=${encodeURIComponent(newfen)}`).then((response) => {
-            if (response.ok) {
-                response.text().then(text => {
-                    this.analysisRecieved({"data":text})
-                })
+        fetch(`${api_url}/getposition?fen=${encodeURIComponent(newfen)}`).then(response => response.json()).then(data => {
+            if (data.status == 0) {
+                this.analysisRecieved(data.data)
             }
             else {
                 this.setState({"analysis":{}})
@@ -39,16 +37,17 @@ export default class Board extends Component {
         })
         this.ws.send(JSON.stringify({"fen":newfen, "type":"analyze"}))
 
-        this.game = new Chess()
-        this.game.load(newfen)
+        this.game = new Chess(newfen)
     }
 
-    analysisRecieved(msg) {
-        var analysis = JSON.parse(msg.data)
+    analysisRecieved(analysis) {
+        var workingGame = new Chess(this.state.startfen)
         var san = analysis.pv.split(" ")
+        console.log(analysis)
         
         san = san.map(element => {
-            const move = this.game.move(element, {"sloppy":true})
+            const move = workingGame.move(element, {"sloppy":true})
+            if (move == null) return
             return move.san
         })
 
@@ -58,7 +57,6 @@ export default class Board extends Component {
         score = score > 0 ? `+${score}` : score
         analysis.score = score
 
-        this.game.load(this.state.startfen)
         this.setState({"analysis":analysis})
     }
 
@@ -66,7 +64,18 @@ export default class Board extends Component {
         super(props)
 
         this.ws = new WebSocket(new_url)
-        this.ws.onmessage = (msg) => this.analysisRecieved(msg)
+        this.ws.onmessage = (msg) => {
+            var data = JSON.parse(msg.data)
+            switch (data.type) {
+                case 1:
+                    this.listeningId = data.id
+                    break;
+                case 2:
+                    if (this.listeningId == data.id)
+                        this.analysisRecieved(data.analysis)
+                    break;
+            }
+        }
 
         this.state = {
             "editfen": defaultPosition, 

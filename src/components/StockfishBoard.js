@@ -18,7 +18,7 @@ export default class StockfishBoard extends Component {
     }
 
     onDrop(data) {
-        const move = this.game.move(data.targetSquare)
+        const move = this.game.move({from: data.sourceSquare, to: data.targetSquare})
         if (move == null) return
         this.setState({"fen": this.game.fen()})
 
