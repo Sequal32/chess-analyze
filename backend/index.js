@@ -1,5 +1,6 @@
 const cors = require('cors')
 const express = require('express')
+const queue = require('queue')
 const app = express()
 const port = 5000
 
@@ -8,6 +9,8 @@ app.use(cors())
 
 const PositionsDatabase = new require('./lib/positionsDatabase')
 const Analyzer = new require('./lib/analyzer')
+
+const GRAPH_DEPTH = 15
 
 var stockfish = null
 const db = new PositionsDatabase("./data/positions.db")
@@ -26,33 +29,61 @@ function quitStockfish() {
     stockfish.quit()
     stockfish = null
 }
-var analysisCurId = 0
+
+async function graph(positions, cb) {
+    var flip = true
+    for (const fen of positions) {
+        const previousAnalysis = await db.getAnalysis(fen)
+        flip = !flip
+        if (typeof previousAnalysis !== "undefined" && GRAPH_DEPTH <= previousAnalysis.depth) {
+            cb(previousAnalysis.score * (flip ? -1 : 1), fen)
+        }
+        else {
+            const a = new Analyzer("./stockfish.exe")
+            const info = await a.analyzeDepth(fen, 15)
+            db.writePosition(fen, info)
+
+            if (info.isMate) return null
+
+            cb(info.score * (flip ? -1 : 1), fen)
+            a.quit()
+        }
+    }
+}
+
+var requestId = 0
 
 app.ws('/stockfish', function(ws, req) {
     ws.on('message', function(msg) {
         const data = JSON.parse(msg)
         switch (data.type) {
-            case 'analyze':
+            case 0:
                 quitStockfish()
                 stockfish = new Analyzer("./stockfish.exe")
                 // Know when to start recording data
                 db.getDepth(data.fen).then(prevDepth => {
                     // Start stockfish
-                    id = analysisCurId++
+                    id = requestId++
                     ws.send(JSON.stringify({"type": 1, "id":id}))
 
                     stockfish.analyze(data.fen, (info) => {
                         if (ws.readyState != 1) return
                         // Record data
-                        if (info.depth > prevDepth)
+                        if (info.depth > prevDepth) {
                             ws.send(JSON.stringify({"type": 2, "id":id, "analysis": info}))
                             db.writePosition(data.fen, info)
+                        }
+                        else
+                            ws.send(JSON.stringify({"type": 3, "percent": info.depth/(prevDepth + 1)}))
                     })
                 })
                 
                 break;
-            case 'stop':
-                stockfish.quit()
+            case 1:
+                graph(data.positions, (score,fen) => {
+                    if (score == null) return
+                    ws.send(JSON.stringify({"type":4, "score":score, "fen":fen}))
+                }).then(console.log, console.log)
                 break;
         }
     })

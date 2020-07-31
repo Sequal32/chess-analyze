@@ -3,7 +3,7 @@ const sqlite = require("sqlite3")
 class PositionDatabase {
     constructor(filename) {
         this.db = new sqlite.Database(filename)
-        this.db.run("CREATE TABLE IF NOT EXISTS positions ('depth' TINYINT, 'nodes' INT, 'score' FLOAT, 'pv' TEXT, 'fen' TINYTEXT PRIMARY KEY)")
+        this.db.run("CREATE TABLE IF NOT EXISTS positions ('depth' TINYINT, 'nodes' INT, 'score' FLOAT, 'mate' BOOLEAN, 'pv' TEXT, 'fen' TINYTEXT PRIMARY KEY)")
     }
 
     getAnalysis(fen) {
@@ -22,7 +22,7 @@ class PositionDatabase {
     }
 
     writePosition(fen, data) {
-        this.db.run("INSERT OR REPLACE INTO positions VALUES (?, ?, ?, ?, ?)", data.depth, data.nodes, data.score, data.pv, fen)
+        this.db.run("INSERT OR REPLACE INTO positions VALUES (?, ?, ?, ?, ?, ?)", data.depth, data.nodes, data.score, data.isMate, data.pv, fen)
     }
 }
 

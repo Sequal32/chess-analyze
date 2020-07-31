@@ -25,6 +25,12 @@ export default class StockfishBoard extends Component {
         this.props.onUpdate(this.state.fen)
     }
 
+    componentDidUpdate(prevState, prevProps) {
+        if (prevProps.fen !== this.props.fen) {
+            this.setState({"fen":this.props.fen})
+        }
+    }
+
     render() {
         this.game = new Chess(this.state.fen)
         return (

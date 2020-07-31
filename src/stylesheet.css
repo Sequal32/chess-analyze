@@ -51,6 +51,7 @@
     height: 520px;
     background-color: rgba(100, 100, 100, .05);
     display: block;
+    margin-top: 10px;
 }
 
 .analyzer-info-div h3 {
@@ -60,4 +61,8 @@
 .analyzer-info-list {
     list-style: none;
     padding-left: 0px;
+}
+
+.analyzer-info-bar {
+    margin-top: 5px;
 }
