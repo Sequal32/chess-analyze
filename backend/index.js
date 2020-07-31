@@ -13,7 +13,7 @@ var stockfish = null
 const db = new PositionsDatabase("./data/positions.db")
 
 app.get("/api/getposition", function(req, res) {
-    db.getAnalysis(req.params.fen).then((analysis) => {
+    db.getAnalysis(req.query.fen).then((analysis) => {
         if (typeof analysis == "undefined")
             res.status(500).send("FEN not analyzed.")
         else
@@ -28,14 +28,17 @@ app.ws('/stockfish', function(ws, req) {
             case 'analyze':
                 stockfish = new Analyzer("./stockfish.exe")
                 // Know when to start recording data
-                const prevDepth = db.getDepth(data.fen)
-                // Start stockfish
-                stockfish.analyze(data.fen, prevDepth, (info) => {
-                    ws.send(JSON.stringify(info))
-                    console.log(info)
-                    // Record data
-                    db.writePosition(data.fen, info)
+                db.getDepth(data.fen).then(prevDepth => {
+                    // Start stockfish
+                    stockfish.analyze(data.fen, (info) => {
+                        if (ws.readyState != 1) return
+                        ws.send(JSON.stringify(info))
+                        // Record data
+                        if (info.depth > prevDepth)
+                            db.writePosition(data.fen, info)
+                    })
                 })
+                
                 break;
             case 'stop':
                 stockfish.quit()
@@ -44,8 +47,9 @@ app.ws('/stockfish', function(ws, req) {
     })
 
     ws.on('close', function() {
-        if (typeof stockfish === "undefined") return
+        if (stockfish === null) return
         stockfish.quit()
+        stockfish = null
     })
 })
 

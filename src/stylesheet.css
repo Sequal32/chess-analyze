@@ -23,7 +23,7 @@
     position: absolute;
     left: 65%;
     width: 20%;
-    height: 100px;
+    height: 80%
 }
 
 .analyzer-info-parent h3 {
@@ -35,7 +35,16 @@
     text-align: left;
     font-size: 24px;
     width: 100%;
-    height: 50px;
+    height: 5%;
+}
+
+.analyzer-top-div h6 {
+    display: inline;
+    margin-left: 10px;
+}
+
+.analyzer-top-div h3 {
+    display: inline;
 }
 
 .analyzer-info-div {

@@ -6,16 +6,22 @@ class Analyzer {
         this.engine = new uci.Engine(this.path)
     }
 
-    analyze(fen, startDepth, callback) {
+    analyze(fen, callback) {
         this.engine.init()
             .then(engine => engine.isready())
             .then(engine => engine.setoption("Contempt", 0))
             .then(engine => engine.position(fen))
             .then(engine => engine.goInfinite())
             .then((emitter) => {
+                var lastDepth = 0
+                var lastData
                 emitter.on("data", (data) => {
                     if (typeof data.score === "undefined") return
-                    callback(data)
+                    if (typeof lastData !== "undefined" && (data.depth != lastDepth))
+                        callback(lastData)
+
+                    lastDepth = data.depth
+                    lastData = data
                 })
             })
             .catch(console.log)
@@ -26,7 +32,7 @@ class Analyzer {
     }
 
     quit() {
-        this.engine.quit()
+        this.engine.quit().then(() => console.log("Engine quit."), (err) => console.log(`Engine quit with errors: ${err}`))
     }
 }
 

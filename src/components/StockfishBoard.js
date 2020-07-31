@@ -8,14 +8,14 @@ export default class StockfishBoard extends Component {
         this.state = {"fen": props.startfen}
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        
+    calculateBoardWidth(screen) {
+        return parseFloat(screen.screenWidth) * 0.295
     }
 
     render() {
         return (
             <div>
-                <Chessboard position={this.props.startfen} draggable="false"></Chessboard>
+                <Chessboard position={this.props.startfen} draggable="false" calcWidth = {this.calculateBoardWidth}></Chessboard>
             </div>
         )
     }

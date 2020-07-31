@@ -1,6 +1,8 @@
+import Chess from 'chess'
 import React, { Component } from 'react'
 import StockfishBoard from './StockfishBoard'
 import AnalysisPanel from './AnalysisPanel'
+import util from 'util'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../stylesheet.css'
@@ -12,9 +14,11 @@ const api_url = loc.protocol === "https:" ? `https://${loc.hostname}:5000/api` :
 
 export default class Board extends Component {
     processFEN = (input) => {
-        this.setState({"startfen": input.target.value})
+        const newfen = input.target.value
+
+        this.setState({"startfen": newfen})
         
-        fetch(`${api_url}/getposition?fen=${encodeURIComponent(this.state.startfen)}`).then((response) => {
+        fetch(`${api_url}/getposition?fen=${encodeURIComponent(newfen)}`).then((response) => {
             if (response.ok) {
                 this.setState({"analysis":response.json()})
             }
@@ -22,24 +26,45 @@ export default class Board extends Component {
                 this.setState({"analysis":{}})
             }
         })
-        this.ws.send(JSON.stringify({"fen":this.state.startfen, "type":"analyze"}))
+        this.ws.send(JSON.stringify({"fen":newfen, "type":"analyze"}))
+
+        this.game = new Chess()
+        this.game.load(newfen)
     }
 
     fenChange = (input) => {
         this.setState({"editfen": input.target.value})
     }
 
-    processPGN() {
+    processPGN(msg) {
+        
+    }
 
+    analysisRecieved(msg) {
+        var analysis = JSON.parse(msg.data)
+        var san = analysis.pv.split(" ")
+        
+        san = san.map(element => {
+            const move = this.game.move(element, {"sloppy":true})
+            return move.san
+        })
+
+        analysis.pv = san.join(" ")
+
+        var score = (analysis.score.value/100).toFixed(1)
+        score = score > 0 ? `+${score}` : `-${score}`
+        analysis.score = score
+
+        this.game.load(this.state.startfen)
+        this.setState({"analysis":analysis})
     }
 
     constructor(props) {
         super(props)
 
         this.ws = new WebSocket(new_url)
-        this.ws.onmessage = (msg) => {
-            this.setState({"analysis":JSON.parse(msg.data)})
-        }
+        this.ws.onmessage = (msg) => this.analysisRecieved(msg)
+        this.game = null
 
         this.state = {
             "editfen": defaultPosition, 
@@ -55,7 +80,7 @@ export default class Board extends Component {
             <div>
                 <h1 class="analyzer-header">Position Analyzer</h1>
                 <div align="right">
-                    <AnalysisPanel depth={this.state.analysis.depth} pv={this.state.analysis.pv}></AnalysisPanel>
+                    <AnalysisPanel analysis={this.state.analysis}></AnalysisPanel>
                 </div>
                 <div class="board" align="middle">
                     <StockfishBoard startfen={this.state.startfen}/>
