@@ -2,7 +2,6 @@ import Chess from 'chess'
 import React, { Component } from 'react'
 import StockfishBoard from './StockfishBoard'
 import AnalysisPanel from './AnalysisPanel'
-import util from 'util'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../stylesheet.css'
@@ -13,14 +12,26 @@ const new_url = loc.protocol === "https:" ? `wss://${loc.hostname}:5000/stockfis
 const api_url = loc.protocol === "https:" ? `https://${loc.hostname}:5000/api` : `http://${loc.hostname}:5000/api`
 
 export default class Board extends Component {
-    processFEN = (input) => {
-        const newfen = input.target.value
+    focusLostFen = (input) => {
+        this.processFEN(input.target.value)
+    }
 
-        this.setState({"startfen": newfen})
+    fenChange = (input) => {
+        this.setState({"editfen": input.target.value})
+    }
+
+    processPGN(msg) {
+        
+    }
+
+    processFEN = (newfen) => {
+        this.setState({"startfen": newfen, "editfen": newfen})
         
         fetch(`${api_url}/getposition?fen=${encodeURIComponent(newfen)}`).then((response) => {
             if (response.ok) {
-                this.setState({"analysis":response.json()})
+                response.text().then(text => {
+                    this.analysisRecieved({"data":text})
+                })
             }
             else {
                 this.setState({"analysis":{}})
@@ -30,14 +41,6 @@ export default class Board extends Component {
 
         this.game = new Chess()
         this.game.load(newfen)
-    }
-
-    fenChange = (input) => {
-        this.setState({"editfen": input.target.value})
-    }
-
-    processPGN(msg) {
-        
     }
 
     analysisRecieved(msg) {
@@ -51,8 +54,8 @@ export default class Board extends Component {
 
         analysis.pv = san.join(" ")
 
-        var score = (analysis.score.value/100).toFixed(1)
-        score = score > 0 ? `+${score}` : `-${score}`
+        var score = analysis.score
+        score = score > 0 ? `+${score}` : score
         analysis.score = score
 
         this.game.load(this.state.startfen)
@@ -64,7 +67,6 @@ export default class Board extends Component {
 
         this.ws = new WebSocket(new_url)
         this.ws.onmessage = (msg) => this.analysisRecieved(msg)
-        this.game = null
 
         this.state = {
             "editfen": defaultPosition, 
@@ -83,7 +85,7 @@ export default class Board extends Component {
                     <AnalysisPanel analysis={this.state.analysis}></AnalysisPanel>
                 </div>
                 <div class="board" align="middle">
-                    <StockfishBoard startfen={this.state.startfen}/>
+                    <StockfishBoard fen={this.state.startfen} onUpdate={this.processFEN}/>
                     <div align="middle">
                         <label class="analyzer-input-label">FEN</label>
                         <input type="text" class='analyzer-input' onChange={this.fenChange} onBlur={this.processFEN} value={this.state.editfen}></input>

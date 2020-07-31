@@ -22,7 +22,7 @@ class PositionDatabase {
     }
 
     writePosition(fen, data) {
-        this.db.run("INSERT OR REPLACE INTO positions VALUES (?, ?, ?, ?, ?)", data.depth, data.nodes, data.score.value/100, data.pv, fen)
+        this.db.run("INSERT OR REPLACE INTO positions VALUES (?, ?, ?, ?, ?)", data.depth, data.nodes, data.score, data.pv, fen)
     }
 }
 

@@ -21,20 +21,27 @@ app.get("/api/getposition", function(req, res) {
     })
 })
 
+function quitStockfish() {
+    if (stockfish === null) return
+    stockfish.quit()
+    stockfish = null
+}
+
 app.ws('/stockfish', function(ws, req) {
     ws.on('message', function(msg) {
         const data = JSON.parse(msg)
         switch (data.type) {
             case 'analyze':
+                quitStockfish()
                 stockfish = new Analyzer("./stockfish.exe")
                 // Know when to start recording data
                 db.getDepth(data.fen).then(prevDepth => {
                     // Start stockfish
                     stockfish.analyze(data.fen, (info) => {
                         if (ws.readyState != 1) return
-                        ws.send(JSON.stringify(info))
                         // Record data
                         if (info.depth > prevDepth)
+                            ws.send(JSON.stringify(info))
                             db.writePosition(data.fen, info)
                     })
                 })
@@ -46,11 +53,7 @@ app.ws('/stockfish', function(ws, req) {
         }
     })
 
-    ws.on('close', function() {
-        if (stockfish === null) return
-        stockfish.quit()
-        stockfish = null
-    })
+    ws.on('close', quitStockfish)
 })
 
 app.get("/", function(req, res) {

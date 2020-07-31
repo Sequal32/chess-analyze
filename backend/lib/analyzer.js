@@ -17,6 +17,7 @@ class Analyzer {
                 var lastData
                 emitter.on("data", (data) => {
                     if (typeof data.score === "undefined") return
+                    data.score = (data.score.value/100).toPrecision(2)
                     if (typeof lastData !== "undefined" && (data.depth != lastDepth))
                         callback(lastData)
 
