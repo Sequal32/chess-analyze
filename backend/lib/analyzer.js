@@ -2,20 +2,23 @@ const uci = require('node-uci')
 
 class Analyzer {
     constructor(stockfish_path) {
-        this.engine = new uci.Engine('./stockfish.exe')
-        this.engine.chain().init().setoption("Contempt", 0).exec()
+        this.path = stockfish_path
+        this.engine = new uci.Engine(this.path)
     }
 
     analyze(fen, startDepth, callback) {
-        this.engine.position(fen).then(() => {
-            const emitter = this.engine.goInfinite({'depth': startDepth})
-            emitter.on("data", (data) => {
-                if (typeof data === undefined) return
-                callback(data)
+        this.engine.init()
+            .then(engine => engine.isready())
+            .then(engine => engine.setoption("Contempt", 0))
+            .then(engine => engine.position(fen))
+            .then(engine => engine.goInfinite())
+            .then((emitter) => {
+                emitter.on("data", (data) => {
+                    if (typeof data.score === "undefined") return
+                    callback(data)
+                })
             })
-        }, (msg) => {
-            console.log("Failed to set position: " + msg)
-        })
+            .catch(console.log)
     }
 
     stop() {

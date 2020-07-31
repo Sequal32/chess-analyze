@@ -1,8 +1,10 @@
+const cors = require('cors')
 const express = require('express')
 const app = express()
-const port = 3000
+const port = 5000
 
 require('express-ws')(app);
+app.use(cors())
 
 const PositionsDatabase = new require('./lib/positionsDatabase')
 const Analyzer = new require('./lib/analyzer')
@@ -12,8 +14,8 @@ const db = new PositionsDatabase("./data/positions.db")
 
 app.get("/api/getposition", function(req, res) {
     db.getAnalysis(req.params.fen).then((analysis) => {
-        if (typeof analysis === undefined)
-            res.status(500)
+        if (typeof analysis == "undefined")
+            res.status(500).send("FEN not analyzed.")
         else
             res.status(200).json(analysis)
     })
@@ -42,6 +44,7 @@ app.ws('/stockfish', function(ws, req) {
     })
 
     ws.on('close', function() {
+        if (typeof stockfish === "undefined") return
         stockfish.quit()
     })
 })

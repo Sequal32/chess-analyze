@@ -8,11 +8,14 @@
     "@testing-library/user-event": "^7.2.1",
     "bootstrap": "^4.5.0",
     "chessboardjsx": "^2.4.2",
+    "express": "^4.17.1",
     "react": "^16.13.1",
     "react-animations": "^1.0.0",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "worker-loader": "^2.0.0",
+    "ws": "^7.3.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -34,5 +37,7 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "proxy": "http://localhost:5000",
+  "devDependencies": {}
 }

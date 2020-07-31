@@ -18,3 +18,37 @@
     width: 40px;
     transform: translate(0, 50%);
 }
+
+.analyzer-info-parent {
+    position: absolute;
+    left: 65%;
+    width: 20%;
+    height: 100px;
+}
+
+.analyzer-info-parent h3 {
+    margin-left: 10px;
+}
+
+.analyzer-top-div {
+    background-color: rgba(20, 20, 20, .1);
+    text-align: left;
+    font-size: 24px;
+    width: 100%;
+    height: 50px;
+}
+
+.analyzer-info-div {
+    height: 520px;
+    background-color: rgba(100, 100, 100, .05);
+    display: block;
+}
+
+.analyzer-info-div h3 {
+    color: grey;
+}
+
+.analyzer-info-list {
+    list-style: none;
+    padding-left: 0px;
+}
