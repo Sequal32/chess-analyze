@@ -6,11 +6,13 @@ const port = 5000
 
 require('express-ws')(app);
 app.use(cors())
+app.use(express.static('../public'))
+app.use('/analyze', express.static('../public'))
 
 const PositionsDatabase = new require('./lib/positionsDatabase')
 const Analyzer = new require('./lib/analyzer')
 
-const GRAPH_DEPTH = 15
+const GRAPH_DEPTH = 25
 
 var stockfish = null
 const db = new PositionsDatabase("./data/positions.db")
@@ -40,7 +42,7 @@ async function graph(positions, cb) {
         }
         else {
             const a = new Analyzer("./stockfish.exe")
-            const info = await a.analyzeDepth(fen, 15)
+            const info = await a.analyzeDepth(fen, GRAPH_DEPTH)
             db.writePosition(fen, info)
 
             if (info.isMate) return null
