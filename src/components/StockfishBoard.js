@@ -34,9 +34,7 @@ export default class StockfishBoard extends Component {
     render() {
         this.game = new Chess(this.state.fen)
         return (
-            <div>
-                <Chessboard position={this.state.fen} draggable="false" calcWidth = {this.calculateBoardWidth} onDrop = {this.onDrop}></Chessboard>
-            </div>
+            <Chessboard position={this.state.fen} draggable="false" calcWidth = {this.calculateBoardWidth} onDrop = {this.onDrop}></Chessboard>
         )
     }
 }

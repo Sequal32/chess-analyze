@@ -2,7 +2,6 @@ import Chess from 'chess'
 import React, { Component } from 'react'
 import StockfishBoard from './StockfishBoard'
 import AnalysisPanel from './AnalysisPanel'
-import Alert from 'react-bootstrap/Alert'
 import CanvasJSReact from '../canvasjs.react.js';
 
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -100,7 +99,7 @@ export default class Board extends Component {
                 this.setState({"depthPercent":data.percent})
                 break;
             case 4: // Get score to graph
-                this.points.push({"y": data.score})
+                this.points.push({"y": data.score, "toolTipContent": `score: {y} depth: ${data.depth}`})
                 this.setState({"gameData":this.points, "startfen": data.fen})
         }
     }
@@ -123,25 +122,28 @@ export default class Board extends Component {
     render() {
         const options = {title: {"text": "Analysis"}, data: [{"type":"area", "dataPoints": this.state.gameData}]}
         return (
-            <div>
-                <h1 class="analyzer-header">Position Analyzer</h1>
-                
-                <div align="right">
-                    <AnalysisPanel analysis={this.state.analysis} depthPercent={this.state.depthPercent * 100}></AnalysisPanel>
-                </div>
-                <div class="board" align="middle">
-                    <StockfishBoard fen={this.state.startfen} onUpdate={this.processFEN}/>
-                    <div align="middle">
-                        <label class="analyzer-input-label">FEN</label>
-                        <input type="text" class='analyzer-input' onChange={this.fenChange} onBlur={this.focusLostFen} value={this.state.editfen}></input>
+            <div class='parent'>
+                <div class="grid-container" align="middle">
+                    <h1 class="analyzer-header grid-top">Position Analyzer</h1>
+                    <div class="grid-main square">
+                        <StockfishBoard fen={this.state.startfen} onUpdate={this.processFEN}/>
                     </div>
-                    <div align="middle">
-                        <label class="analyzer-input-label">PGN</label>
-                        <textarea type="text" class='analyzer-input' onChange={this.pgnChange} onBlur={this.focusLostPgn} value={this.state.editpgn}></textarea>
+                    <div class="grid-bottom">
+                        <div align='left' class='input-yes'>
+                            <label class="analyzer-input-label">FEN</label>
+                            <input type="text" class='analyzer-input' onChange={this.fenChange} onBlur={this.focusLostFen} value={this.state.editfen}></input>
+                        </div>
+                        <div align='left' class='input-yes'>
+                            <label class="analyzer-input-label">PGN</label>
+                            <textarea type="text" class='analyzer-input' onChange={this.pgnChange} onBlur={this.focusLostPgn} value={this.state.editpgn}></textarea>
+                        </div>
+                    </div>
+                    <div class="grid-right">
+                        <AnalysisPanel analysis={this.state.analysis} depthPercent={this.state.depthPercent * 100}></AnalysisPanel>
                     </div>
                 </div>
-                <div align="middle">
-                <CanvasJSChart options = {options}/>
+                <div class="chart" align="center">
+                    <CanvasJSChart options = {options}/>
                 </div>
             </div>
         )

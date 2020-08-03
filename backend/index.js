@@ -6,8 +6,8 @@ const port = 5000
 
 require('express-ws')(app);
 app.use(cors())
-app.use(express.static('../public'))
-app.use('/analyze', express.static('../public'))
+app.use(express.static('../build'))
+app.use('/analyze', express.static('../build'))
 
 const PositionsDatabase = new require('./lib/positionsDatabase')
 const Analyzer = new require('./lib/analyzer')
@@ -38,7 +38,7 @@ async function graph(positions, cb) {
         const previousAnalysis = await db.getAnalysis(fen)
         flip = !flip
         if (typeof previousAnalysis !== "undefined" && GRAPH_DEPTH <= previousAnalysis.depth) {
-            cb(previousAnalysis.score * (flip ? -1 : 1), fen)
+            cb(previousAnalysis.score * (flip ? -1 : 1), previousAnalysis.depth, fen)
         }
         else {
             const a = new Analyzer("./stockfish.exe")
@@ -47,7 +47,7 @@ async function graph(positions, cb) {
 
             if (info.isMate) return null
 
-            cb(info.score * (flip ? -1 : 1), fen)
+            cb(info.score * (flip ? -1 : 1), info.depth, fen)
             a.quit()
         }
     }
@@ -76,15 +76,15 @@ app.ws('/stockfish', function(ws, req) {
                             db.writePosition(data.fen, info)
                         }
                         else
-                            ws.send(JSON.stringify({"type": 3, "percent": info.depth/(prevDepth + 1)}))
+                            ws.send(JSON.stringify({"type": 3, "percent": info.depth/prevDepth}))
                     })
                 })
                 
                 break;
             case 1:
-                graph(data.positions, (score,fen) => {
+                graph(data.positions, (score, depth, fen) => {
                     if (score == null) return
-                    ws.send(JSON.stringify({"type":4, "score":score, "fen":fen}))
+                    ws.send(JSON.stringify({"type":4, "score":score, "fen":fen, "depth":depth}))
                 }).then(console.log, console.log)
                 break;
         }

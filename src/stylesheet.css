@@ -1,68 +1,86 @@
-.analyzer-header {
-    text-align: center;
-    margin-top: 20px;
-    margin-bottom: 30px;
+.parent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    height: 85vh;
+
+    /* position: absolute; */
 }
 
-.analyzer-input {
-   margin-top: 20px;
-   width: 540px;
-   border-radius: 5px;
-   background-color: rgba(20, 20, 20, .1);
-   vertical-align: middle;
+.analyzer-header {text-align: center;}
+.grid-main {grid-area: main;}
+.grid-right {grid-area: right;}
+.grid-bottom {grid-area: bottom; position:relative}
+.grid-top {grid-area: top;}
+.square {
+    box-sizing: inherit;
 }
 
-.analyzer-input-label {
-    margin-right: 10px;
-    text-align: center;
-    width: 40px;
-    transform: translate(0, 50%);
-}
-
-.analyzer-info-parent {
+.grid-container {
+    display: grid;
+    grid-template-areas:
+    'top top' 
+    'main right'
+    'main right'
+    'bottom none';
+    width: fit-content;
     position: absolute;
-    left: 65%;
-    width: 20%;
-    height: 80%
 }
 
-.analyzer-info-parent h3 {
-    margin-left: 10px;
+.grid-bottom input, textarea {
+    width: 90%;
+    /* margin-left: 20px; */
+    position: absolute;
+    left: 2.5em;
+}
+
+.grid-bottom label {
+    vertical-align: top;
+    transform: translate(0, 50%);
+    display: inline;
+}
+
+.chart {
+    position: absolute;
+    top: 90%;
+    width: 100%;
+}
+
+.grid-right {
+    position: absolute;
+    width: 15vw;    
+    height: 100%;
+    word-wrap: break-word;
+}
+
+.input-yes {
+    margin-top: 15px;
 }
 
 .analyzer-top-div {
-    background-color: rgba(20, 20, 20, .1);
-    text-align: left;
-    font-size: 24px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.analyzer-info-parent {
     width: 100%;
-    height: 5%;
-}
-
-.analyzer-top-div h6 {
-    display: inline;
+    height: 100%;
     margin-left: 10px;
+    display: inline-block;
+
+    text-align: left;
 }
 
-.analyzer-top-div h3 {
+.analyzer-info-parent h3,h6 {
+    margin-left: 0.25em;
     display: inline;
-}
-
-.analyzer-info-div {
-    height: 520px;
-    background-color: rgba(100, 100, 100, .05);
-    display: block;
-    margin-top: 10px;
-}
-
-.analyzer-info-div h3 {
-    color: grey;
-}
-
-.analyzer-info-list {
-    list-style: none;
-    padding-left: 0px;
 }
 
 .analyzer-info-bar {
-    margin-top: 5px;
+    margin-bottom: 2px;
+    margin-top: 2px;
+}
+
+.analyzer-info-div {
+    border-bottom: 2px solid lightgrey;
 }
