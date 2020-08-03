@@ -56,11 +56,11 @@ export default class Board extends Component {
         this.setState({"startfen": this.game.fen(), "editpgn": newpgn})
 
         const graphGame = new Chess()
-        var toAnalyze = [defaultPosition]
+        var toAnalyze = [{"fen":defaultPosition}]
 
         this.game.history().forEach(async move => {
-            graphGame.move(move)
-            toAnalyze.push(graphGame.fen())
+            const newMove = graphGame.move(move)
+            toAnalyze.push({"fen": graphGame.fen(), "extra":newMove.san})
         })
         this.ws.send(JSON.stringify({"type":1, "positions":toAnalyze}))
     }
@@ -99,7 +99,9 @@ export default class Board extends Component {
                 this.setState({"depthPercent":data.percent})
                 break;
             case 4: // Get score to graph
-                this.points.push({"y": data.score, "toolTipContent": `score: {y} depth: ${data.depth}`})
+                this.points.push({"y": data.score, "toolTipContent": `score: {y} depth: ${data.depth} move: ${data.extra}`, "click": () => {
+                    this.setState({"startfen": data.fen})
+                }})
                 this.setState({"gameData":this.points, "startfen": data.fen})
         }
     }

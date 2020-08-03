@@ -34,11 +34,17 @@ function quitStockfish() {
 
 async function graph(positions, cb) {
     var flip = true
-    for (const fen of positions) {
+    for (const data of positions) {
+        const fen = data.fen
+        const extra = data.extra
+        console.log(data)
+
+        var returnAnalysis = null;
         const previousAnalysis = await db.getAnalysis(fen)
+
         flip = !flip
         if (typeof previousAnalysis !== "undefined" && GRAPH_DEPTH <= previousAnalysis.depth) {
-            cb(previousAnalysis.score * (flip ? -1 : 1), previousAnalysis.depth, fen)
+            returnAnalysis = previousAnalysis
         }
         else {
             const a = new Analyzer("./stockfish.exe")
@@ -47,9 +53,10 @@ async function graph(positions, cb) {
 
             if (info.isMate) return null
 
-            cb(info.score * (flip ? -1 : 1), info.depth, fen)
+            returnAnalysis = previousAnalysis;
             a.quit()
         }
+        cb(returnAnalysis.score * (flip ? -1 : 1), returnAnalysis.depth, extra, fen)
     }
 }
 
@@ -82,9 +89,9 @@ app.ws('/stockfish', function(ws, req) {
                 
                 break;
             case 1:
-                graph(data.positions, (score, depth, fen) => {
+                graph(data.positions, (score, depth, extra, fen) => {
                     if (score == null) return
-                    ws.send(JSON.stringify({"type":4, "score":score, "fen":fen, "depth":depth}))
+                    ws.send(JSON.stringify({"type":4, "score":score, "fen":fen, "depth":depth, "extra":extra}))
                 }).then(console.log, console.log)
                 break;
         }

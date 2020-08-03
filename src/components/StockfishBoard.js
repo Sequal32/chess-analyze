@@ -26,7 +26,7 @@ export default class StockfishBoard extends Component {
     }
 
     componentDidUpdate(prevState, prevProps) {
-        if (prevProps.fen !== this.props.fen) {
+        if (this.state.fen !== this.props.fen) {
             this.setState({"fen":this.props.fen})
         }
     }
