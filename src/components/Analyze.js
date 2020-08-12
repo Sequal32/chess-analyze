@@ -3,6 +3,7 @@ import React, { Component } from 'react'
 import StockfishBoard from './StockfishBoard'
 import AnalysisPanel from './AnalysisPanel'
 import CanvasJSReact from '../canvasjs.react.js';
+import Communicator from '../lib/Communicator'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../stylesheet.css'
@@ -33,17 +34,7 @@ export default class Board extends Component {
 
     processFEN = (newfen) => {
         this.setState({"startfen": newfen, "editfen": newfen})
-        
-        fetch(`${api_url}/getposition?fen=${encodeURIComponent(newfen)}`).then(response => response.json()).then(data => {
-            if (data.status === 0) {
-                this.analysisRecieved(data.data)
-            }
-            else {
-                this.setState({"analysis":{}})
-            }
-        })
-        this.ws.send(JSON.stringify({"fen":newfen, "type":0}))
-
+        this.communicator.startAnalysis(newfen)
         this.game = new Chess(newfen)
     }
 
@@ -62,7 +53,7 @@ export default class Board extends Component {
             const newMove = graphGame.move(move)
             toAnalyze.push({"fen": graphGame.fen(), "extra":newMove.san})
         })
-        this.ws.send(JSON.stringify({"type":1, "positions":toAnalyze}))
+        this.communicator.startGraph(toAnalyze)
     }
 
     analysisRecieved(analysis) {
@@ -84,39 +75,17 @@ export default class Board extends Component {
         this.setState({"analysis":analysis,})
     }
 
-    // Websocket hooks
-    onMessage = (msg) => {
-        var data = JSON.parse(msg.data)
-        switch (data.type) {
-            case 1:
-                this.listeningId = data.id
-                break;
-            case 2:
-                if (this.listeningId === data.id)
-                    this.analysisRecieved(data.analysis)
-                break;
-            case 3:
-                this.setState({"depthPercent":data.percent})
-                break;
-            case 4: // Get score to graph
-                this.points.push({"y": data.score, "toolTipContent": `score: {y} depth: ${data.depth} move: ${data.extra}`, "click": () => {
-                    this.setState({"startfen": data.fen})
-                }})
-                this.setState({"gameData":this.points, "startfen": data.fen})
-        }
-    }
-
     constructor(props) {
         super(props)
 
-        this.ws = new WebSocket(new_url)
-        this.ws.onmessage = this.onMessage
+        this.communicator = new Communicator(new_url)
+        this.communicator.events.on("analysis", (data) => this.setState({"analysis":data}))
+        this.communicator.events.on("graph", this.analysisRecieved)
+        this.communicator.events.on("progress", (percent) => this.setState({"depthPercent":percent}))
 
         this.state = {
             "editfen": defaultPosition, 
             "startfen": defaultPosition, 
-
-            "analyzing": false,
             "analysis": {}
         }
     }

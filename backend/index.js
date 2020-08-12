@@ -17,15 +17,6 @@ const GRAPH_DEPTH = 25
 var stockfish = null
 const db = new PositionsDatabase("./data/positions.db")
 
-app.get("/api/getposition", function(req, res) {
-    db.getAnalysis(req.query.fen).then((analysis) => {
-        if (typeof analysis == "undefined")
-            res.status(200).json({'status': 1})
-        else
-            res.status(200).json({'status': 0, 'data': analysis})
-    })
-})
-
 function quitStockfish() {
     if (stockfish === null) return
     stockfish.quit()
@@ -60,8 +51,6 @@ async function graph(positions, cb) {
     }
 }
 
-var requestId = 0
-
 app.ws('/stockfish', function(ws, req) {
     ws.on('message', function(msg) {
         const data = JSON.parse(msg)
@@ -69,17 +58,18 @@ app.ws('/stockfish', function(ws, req) {
             case 0:
                 quitStockfish()
                 stockfish = new Analyzer("./stockfish.exe")
-                // Know when to start recording data
+                
                 db.getDepth(data.fen).then(prevDepth => {
-                    // Start stockfish
-                    id = requestId++
-                    ws.send(JSON.stringify({"type": 1, "id":id}))
-
+                    // Send cached data
+                    db.getAnalysis(data.fen).then((analysis) => {
+                        if (typeof analysis != "undefined")
+                            ws.send({"type": 1, "analysis": analysis})
+                    })
                     stockfish.analyze(data.fen, (info) => {
                         if (ws.readyState != 1) return
                         // Record data
                         if (info.depth > prevDepth) {
-                            ws.send(JSON.stringify({"type": 2, "id":id, "analysis": info}))
+                            ws.send(JSON.stringify({"type": 1, "analysis": info}))
                             db.writePosition(data.fen, info)
                         }
                         else
@@ -91,7 +81,7 @@ app.ws('/stockfish', function(ws, req) {
             case 1:
                 graph(data.positions, (score, depth, extra, fen) => {
                     if (score == null) return
-                    ws.send(JSON.stringify({"type":4, "score":score, "fen":fen, "depth":depth, "extra":extra}))
+                    ws.send(JSON.stringify({"type":2, "score":score, "fen":fen, "depth":depth, "extra":extra}))
                 }).then(console.log, console.log)
                 break;
         }
